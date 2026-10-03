@@ -1,0 +1,7 @@
+node_modules
+node_modules.nosync
+.DS_Store
+test-results
+playwright-report
+*.log
+_ref_tmp/

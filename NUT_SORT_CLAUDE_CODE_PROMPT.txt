@@ -1,0 +1,146 @@
+ROLE: You are building "Nut Sort", a personal offline nuts-and-bolts colour-sorting game for Kiaran (owner/creator). Build the COMPLETE game described below. Do not ask for confirmation of defaults listed here; they are decided. Ask only if something is truly blocking.
+
+=== PROJECT LOCATION / STORAGE (MANDATORY) ===
+ROOT = "~/Library/Mobile Documents/com~apple~CloudDocs/Bolt Sorting Game" (iCloud Drive folder "Bolt Sorting Game"). ALL code, data, generated levels, docs, build tools, notes live inside ROOT. Never write project files elsewhere.
+Spec files already in ROOT (READ BOTH FULLY FIRST, page by page, they are the visual + rules source of truth; view page images, not just text): ROOT/Nut_Sort_Pitch_v2.pdf (18 pages, LATEST, wins on any conflict) and ROOT/Nut_Sort_App_Screens.pdf (9 pages, v1 screens, use for layout detail not superseded by v2). Ignore ROOT/_ref_tmp (scratch page renders).
+Required layout:
+ROOT/app/            -> the shippable PWA (index.html, css, js modules, manifest.webmanifest, service-worker.js, icons/, fonts/ Poppins Bold+Medium self-hosted woff2, data/)
+ROOT/app/data/levels-easy.json, levels-medium.json, levels-hard.json, daily.json  (generated, committed)
+ROOT/tools/          -> Node scripts: generator.js, solver.js, build-levels.js, build-daily.js, verify-all.js, serve.js
+ROOT/tests/          -> unit tests (rules engine, solver, group move, mystery, stars, streak, date logic, birthday)
+ROOT/docs/SPEC.md    -> your condensed spec from this prompt + PDFs; docs/DECISIONS.md (every default + any deviation, why); docs/PROGRESS.md (checklist, update as you go so future sessions can resume); docs/IDEAS.md (backlog, Kiaran keeps adding ideas); docs/TUNING.md (all tunable numbers in one place + where they live in code); docs/INSTALL_IPHONE.md (step-by-step install for Kiaran)
+ROOT/CLAUDE.md -> short project memory for future Claude Code sessions: stack, commands, folder map, rules summary, "read docs/PROGRESS.md first".
+Init git in ROOT (add .gitignore for node_modules, .DS_Store). Commit at each milestone. Keep node_modules small; prefer zero runtime deps. iCloud note: avoid huge node_modules churn; if needed put node_modules in .nosync (name it node_modules.nosync + symlink) to stop iCloud syncing it.
+
+=== CONTEXT / GOALS (from Kiaran) ===
+- Replaces a favourite offline sorting game that has too many ads. ZERO ads, zero tracking, zero network calls at runtime, fully offline.
+- Built on his Mac, played on his iPhone offline. No App Store. Delivery = PWA installed to iPhone Home Screen via Safari "Add to Home Screen", standalone display, works in airplane mode after first load.
+- Service workers need HTTPS (or localhost). Provide BOTH: (a) tools/serve.js local dev server for Mac testing; (b) documented free HTTPS one-time install path (recommend GitHub Pages from ROOT/app, or equivalent) so iPhone can install it once and then run offline forever. Write docs/INSTALL_IPHONE.md with exact steps. Cache-first service worker precaching every asset + all level JSON; versioned cache name; update flow = new version activates next launch, never loses progress.
+- Three difficulties Easy/Medium/Hard with clear progression, effectively unlimited levels, but no useless levels (every level verified solvable and appropriately hard for its rung).
+- Smooth, quick, nice-to-watch animations. Never makes you wait.
+- "Created by Kiaran" credited on Home (foot) and in Settings (bottom).
+- He will keep adding ideas: architect modularly (rules engine, renderer, screens, storage, audio, themes, level data separated; feature flags/config file) so new mechanics/screens slot in easily.
+- Target: iPhone portrait, safe-area insets (notch/home indicator), 60fps, touch-first, no hover dependency, prevent double-tap zoom/pinch/rubber-band/text selection/long-press callouts in play. Also usable in desktop Safari/Chrome for testing.
+
+=== TECH ===
+Vanilla HTML/CSS/JS (ES modules), no framework required (small TS/Vite acceptable only if output is static files in app/ and offline). Rendering: DOM+CSS transforms or Canvas/SVG, your choice, but must hit 60fps on iPhone with up to 108 nuts and 21+ bolts; use transform/opacity only for animation; requestAnimationFrame or WAAPI. Pure, deterministic, UI-free rules engine module shared by game AND Node tools (same code solves offline and gives hints in-app). Storage: localStorage (versioned schema, migrations) + optional IndexedDB; Backup/Restore = export/import JSON file (Settings) so clearing Safari data doesn't lose progress. Audio: Web Audio API synthesised sounds only, NO audio files.
+
+=== CORE RULES ===
+- Board = bolts (stacks). Each bolt has capacity H (nuts high). Each colour has exactly H nuts ("nuts per colour" = bolt height for that board). Some bolts start empty (spares).
+- Move: tap a source bolt -> its top run lifts and every legal destination bolt glows gold; tap destination to drop; tap source again or elsewhere to cancel. Legal destination = empty bolt OR bolt whose top nut is same colour, with room.
+- GROUP MOVES (v2 rule 1): the whole contiguous top run of one colour moves together; moves as many as fit (min(run length, free slots)); player cannot choose fewer. Room for 3 & run of 2 -> both move; room for 1 -> one moves, rest stay. Animation: run lifts, glides, drops together with tiny stagger. A group move counts as 1 move.
+- Win: every non-empty bolt full and single-coloured. Finished bolt gets gold check + gold pulse.
+- MYSTERY NUTS (v2 rule 2): hidden nuts render grey with "?" . A hidden nut reveals its colour (180ms grey->colour) when the nut directly above it leaves (i.e. it becomes the top). Only the VISIBLE top run moves as a group; a nut revealed by a move never joins that same move; hidden nuts never join a group. Undo re-hides nuts that move revealed (no peeking via move+undo). Placement: Medium every 5th level from level 10 (hidden on half the bolts); Hard every 3rd level from level 6 (every bolt). Easy: none. Par assumes full information. Every mystery board verified solvable.
+- TALL BOLTS (v2 rule 3): colours 4–18; nuts per colour 3–9; spare bolts ALWAYS >=2 (1 spare made all test boards unsolvable). Total nuts up to 90 on ladders, up to 108 on daily. Nuts must stay >=31px wide (easy taps). Max bolts on screen by height: 3–5 high -> 35; 6–7 -> 28; 8–10 -> 21; 12 -> 14. Board shapes per rung: packed, balanced, tall (plus daily shapes below). Layout engine auto-wraps bolts into rows to fit screen respecting these limits. Few stacks isn't automatically hard (4x9 = 26 moves); Hard tall levels use >=8 stacks. Reference measured shapes (2 spares): 4x9=36 nuts/26 moves, 6x9=54/45, 8x9=72/62, 10x9=90/81.
+- Controls in play: Undo (unlimited, removes move from count, restores hidden), Hint (badge shows left), Restart, Extra bolt (free spare added, badge shows how many left; default 2 per level — tunable). No timer. No penalties.
+- No-moves detection: when no legal move exists, show "No moves left" overlay automatically: Undo / use a free bolt / Restart.
+
+=== LEVEL GENERATION (on Mac, pre-loaded; phone never solves to create levels) ===
+Pipeline (v2 p16): 1 Seed: every board from a numeric seed; same seed -> same board (seeded PRNG e.g. mulberry32). 2 Shuffle and solve: shuffle, run solver (with group-move rules; mystery solved with full info for par). 3 Keep or bin: unsolvable discarded, rest shipped. Par = optimal/near-optimal solution length found by solver (use A*/IDA*/BFS with good heuristics + state hashing + canonicalisation of bolt order; time-box per board; record solution path in data for hints-from-start).
+Ladders: 30-level hand-tuned ladders per difficulty already designed in PDF (v2 p10/p16): measured with group moves:
+ Easy: colours 6–12, nuts/bolt 3–5, bolts 9–14, spares 2–3, mystery none, par ~14–36.
+ Medium: colours 6–15, nuts/bolt 3–7, bolts 8–17, spares 2, mystery 1 in 5 (from L10, half bolts), par ~26–49.
+ Hard: colours 8–18, nuts/bolt 4–9, bolts 10–20, spares 2, mystery 1 in 3 (from L6, every bolt), par ~48–86.
+ Medium/Hard vary shape (packed, balanced, tall and roomy).
+ Example anchor: Easy level 13 = 10 colours, 12 bolts (2 spare), par 24, 3 stars <=28, 2 stars <=38.
+"Unlimited levels": ship a large pre-generated verified set per difficulty (target several hundred each, e.g. 300+, configurable) following the 30-rung ladder curve then a sustained plateau that cycles shapes at top-of-difficulty; plus document how to regenerate more via `node tools/build-levels.js --difficulty hard --count N`. Monotone-ish difficulty by par within each band; reject boards outside band (no trivially easy or absurd ones). Store compactly (e.g. strings of colour indices per bolt). Level i of difficulty is deterministic.
+DAILY POOL: 70 pre-loaded verified boards (target ~28.4KB; a year ~150KB — make count configurable, build a full year if time allows). Harder than Hard: par 75–108. Five rotating shapes: packed, wide-and-tall, mystery, giant tall, tall mystery (the 12x9 board = 14 bolts, 108 nuts). Expect many shuffles binned (was 23 of 93). Date -> board index deterministic from local date (days since epoch mod pool size, or calendar-anchored). verify-all.js re-solves every shipped board and fails CI/test if any unsolvable or out of band. Log stats to docs/ (counts, par ranges, binned).
+
+=== STARS / SCORING ===
+Normal: 3 stars if moves <= ceil(1.2*par); 2 stars <= ceil(1.6*par); 1 star any finish. (Par 20: 24/32; par 24: 28/38 — match PDF numbers, check rounding.)
+Mystery levels: 3 stars <=150% par, 2 stars <=200%.
+Undo removes move from count. Hint move counts as a normal move.
+Daily: 3x stars (3, 6 or 9) + streak bonus +1 star per streak day, capped +10. Birthdays (Kiaran 15 March, Flynn 19 October): daily pays 2x on top (Kiaran approved "my idea" default).
+Keep best stars per level; replay to chase 3 stars. Star total = all earned across difficulties + daily. Stars are also a spendable currency for themes: track lifetime earned vs spent separately; displayed total = (decide & document; recommend showing available balance on Home with lifetime in Stats).
+All thresholds in one config (docs/TUNING.md), "starting point, to be tuned after Kiaran plays".
+
+=== HINTS ===
+3 per level, 1 on mystery levels, free (no ads/videos). Hint lifts one nut/run and glows its landing bolt + bubble telling what to try. Uses same solver: if still on stored solution path use it; if off-route, re-solve from current state in a Web Worker (background, non-blocking, may take a few seconds on biggest boards; show subtle spinner; cancel if player moves). For mystery levels the hint solver may only use information visible to the player (treat hidden as unknown; pick a safe good move) — document approach.
+
+=== DAILY CHALLENGE + STREAKS ===
+One board per day, same all day, resets at local midnight (phone clock is fine for a personal game). Accessible from Home date chip and from Difficulty screen ("Always one tap away, with your streak"). Streak = consecutive days daily beaten. Streak freeze: earn 1 per 7-day streak, hold max 2; missing exactly one day auto-consumes a freeze ("Streak freeze used" / "Streak saved" screen); missing 2+ days resets streak to 0. Track best streak, dailies beaten. Handle app not opened for days, clock changes, timezone (use local date strings YYYY-MM-DD). Unit-test these.
+
+=== BIRTHDAY THEME (Kiaran 15 March, Flynn 19 October; local date) ===
+Birthdays are a data list in config: [{name:"Kiaran", month:3, day:15}, {name:"Flynn", month:10, day:19}] (19 October). Both get the identical birthday treatment below, with the greeting using that person's name ("Happy Birthday, Flynn!" on 19 Oct). Easy to add more later. Preview in Settings lets you pick which birthday to preview.
+Auto on each birthday every year: bunting across top, balloons at sides, party hat on lifted nut, confetti on every level complete, greeting overlay shown once on first open that day: "Happy Birthday, <name>!" plus birthday jingle sound. Daily challenge 2x stars that day. Layers over the equipped theme; nut colours unchanged. Cannot be bought in Themes. Settings has "Preview birthday theme" (choose Kiaran or Flynn) to see/test any day. Date chip and streak still shown.
+
+=== THEMES (stars buy themes) — REPLACES the 4 sample themes in the PDF ===
+Engine: themes = data in app/js/themes.js (id, name, price, tier, tokens, optional fx). Tokens as CSS custom properties: --bg (multi-stop gradient, can be linear+radial layers), --panel, --panel-border, --accent, --accent-2 (gradient partner for main buttons), --accent-light, --text, --muted, --glow, --bolt-tint, --target-glow. Themes change UI chrome/background/buttons/glow only — NEVER the 18 nut colours or symbols. Every theme must pass contrast checks (text >=4.5:1 on panel, every nut colour distinguishable against its background; add a test that computes this). Apply instantly with a 300ms crossfade. Background gradients must be static-cheap (no layout thrash); fx = optional lightweight canvas/CSS layer (twinkling stars, drifting particles, slow hue shift) that auto-disables under Reduce Motion and pauses during animations if fps drops. Main gold-style button in every theme = gradient --accent -> --accent-2 with glossy highlight; outline buttons use --accent.
+Themes screen: grid of preview cards (mini board + button sample in that theme), name, price, lock/owned/equipped state; tap = full-screen live preview with "Buy for N stars" / "Equip"; can't buy if balance short (show how many more needed). Sort by tier. Owned themes persist in save + backup.
+
+FREE (pre-unlocked, both must look premium, polished as the best paid ones):
+ 1 Black & Gold (default, Kiaran's): bg #09090B with soft warm radial glow rgba(234,186,60,.10) top-right and faint large dark-gold arcs as in PDF; panel #161411; accent #EABA3C -> #C9952A; light #FFECA8; text #F7F1E2; muted #AAA086.
+ 2 Cosmic Purple (friend's): deep dark-blue to black gradient — linear 160deg #141A4A -> #0A0E2A -> #04040A, plus nebula radial glows rgba(123,63,228,.28) and rgba(46,91,255,.18); fx: sparse twinkling star field + slow drifting nebula; panel rgba(20,18,48,.85); border #3B2F7A; accent #9B6BFF -> #5B3DF5; light #CDB8FF; text #EEEAFF; muted #8C88B8; target glow violet.
+
+PURCHASABLE (22). Cheap = clean, good-looking solid/soft gradients; expensive = really cool rich multi-stop gradients + fx.
+ Tier 1 Classic (40–90 stars):
+  3 Graphite 40 — charcoal #1B1D21->#0B0C0E, silver accent #C9CED6.
+  4 Midnight Navy 50 — #0E1A33->#060A14, ice-blue accent #7FB6FF.
+  5 Forest 60 — #10261A->#050C08, sage/lime accent #9BD36A.
+  6 Ocean 60 — #0A2A3A->#03111A, aqua accent #3FD0E0.
+  7 Crimson 70 — #2A0A10->#0B0204, ruby accent #FF4D5E.
+  8 Mocha 70 — #2A1D16->#0E0906, latte accent #D9A77A.
+  9 Slate Teal 80 — #15302F->#081312, teal accent #4FD1B5.
+ 10 Plum 90 — #2A1230->#0C050E, orchid accent #E07BFF.
+ Tier 2 Luxe (120–200):
+ 11 Rose Gold 120 — #2B1A1C->#0D0809, accent #F2B5A0->#C98A7A, blush glow.
+ 12 Emerald 140 — #063A2B->#021410, emerald accent #2EE59D->#0FA36B, gem sheen.
+ 13 Sapphire 150 — #0B2370->#030A24, accent #4C7DFF->#1E3FCC.
+ 14 Copper 160 — #2E1609->#0D0603, copper accent #E58B4A->#B4581F, metallic highlight.
+ 15 Arctic 180 — #0E2233->#05101A with frosty white radial, accent #BFEFFF, light snow fx.
+ 16 Chrome 200 — #2A2D33->#0C0D10, brushed-metal gradient buttons #F2F4F7->#9AA3AE.
+ Tier 3 Spectacular (260–450, rich gradients + subtle fx):
+ 17 Sunset Strip 260 — 180deg #FF7A3D -> #E63A6F -> #5A1E7A -> #120818 (dark at bottom so board stays readable), accent #FFB547.
+ 18 Aurora 300 — #021018 base with waving bands #19E6A3, #1FA3E6, #8B5CF6 (slow animated), accent #5CFFC8.
+ 19 Synthwave 340 — #2B0A3D->#0A0218 with neon grid horizon + pink/cyan sun glow, accent #FF3EC8->#28E0FF.
+ 20 Lava 380 — #3A0800->#0A0100 with glowing molten cracks #FF5A00/#FFB000 slowly pulsing, accent #FF7A1A.
+ 21 Deep Ocean 400 — #003B5C->#001020->#000307, rising bubble particles, bioluminescent accent #00F0D0.
+ Tier 4 Legendary (600–1200, showpiece):
+ 22 Nebula 600 — layered magenta/indigo/teal clouds #FF3D9A, #5B2BE0, #00C2D1 over black, parallax stars, accent iridescent gradient.
+ 23 Molten Gold 750 — liquid gold flowing gradient #FFE08A->#EABA3C->#8A5A00 animated sheen over #0A0700, gold dust particles; ultimate upgrade of Black & Gold.
+ 24 Holographic 900 — black base, slow-shifting holo foil gradient (#FF9AE0, #9AE6FF, #B8FF9A, #FFE39A) on buttons/panel borders, prismatic sheen.
+ 25 Black Hole 1000 — pure black with swirling accretion-disc ring (orange->white->violet) behind board top, gravitational star streaks, accent #FFB070.
+ 26 Prism 1200 — dark #07070B with full-spectrum rotating conic-gradient glow and rainbow-edged panels, accent cycles hue slowly.
+Prices in config; economy note: ship ~several hundred levels/difficulty at <=3 stars each + dailies (up to 19/day) so legendary themes are long-term goals. Document in TUNING.md.
+Birthday overlay is not a buyable theme; it layers on top of whatever theme is equipped.
+
+=== STATS ===
+Levels solved, perfect solves (3 stars / at-or-under par — define & document), nuts sorted, best streak, current streak, dailies beaten, average stars, solved per difficulty. Opens by tapping star total on Home; Themes one tap from Stats.
+
+=== SCREENS (match PDF mock-ups closely; v2 wins) ===
+1 HOME: top row: date chip (today's date; gold dot = today's daily still to do, tick = done; tap opens daily), streak flame + number (hidden when 0/no streak), star total (tap -> Stats/Themes), settings gear. Centre: black & gold stage showing nuts (original colours). Gold main button: CONTINUE (only when a level unfinished; shows difficulty, level, moves so far e.g. "Medium · Level 14 · 9 moves in", drops straight into Playing) else PLAY. Gold-outline NEW GAME -> Difficulty. Foot: "Created by Kiaran". First launch: Play, no flame.
+2 CHOOSE DIFFICULTY: back; three cards Easy/Medium/Hard each with name, 1–3 gold hexagons for challenge, real board preview thumbnail, progress (levels done + stars, per difficulty); card with unfinished game has gold border + RESUME; Daily challenge card always visible with streak. Tapping difficulty -> next unplayed level intro (also allow a level list/select of completed levels for replay — keep simple, e.g. grid of levels with stars).
+3 TUTORIAL: very first level ever = 3-colour tutorial board, tag TUTORIAL, hint bubble only on first level, disappears after first move. Teaches "A nut can go onto an empty bolt, or onto the same colour, if there's room." Star targets example 3 stars <=8, 2 <=11.
+4 LEVEL INTRO: level number, difficulty tag, colours, bolts (spares), 3-star target, START. "No timer. No penalties. Stuck? Undo, hint, add a bolt or restart."
+5 PLAYING: top: pause icon, level + tag (EASY/MEDIUM/HARD/DAILY/TUTORIAL), moves counter, star targets. Board. Bottom controls: Undo, Hint(badge), Restart, Extra bolt(badge).
+6 COMPLETE: gold checks on finished bolts, confetti (~1.5s), then Stars.
+7 RESULT/STARS: big stars earned, moves vs par, buttons NEXT LEVEL (-> next level intro), REPLAY, HOME. Daily result shows 3x stars + streak bonus + streak.
+8 PAUSE overlay (board visible behind): Resume, Restart, Settings, Home.
+9 NO MOVES LEFT overlay: Undo, use free bolt, Restart.
+10 SETTINGS: Sound, Music(optional ambient synth, default off), Motion (reduce motion; also respect prefers-reduced-motion -> quick fades), Symbols on nuts (accessibility toggle, default on as in PDF), Preview birthday theme, Backup (export) / Restore (import), Reset progress (confirm with in-app modal, not window.confirm). Bottom of Settings: CREDITS section (gold heading, panel card, centred, elegant): "Created by Kiaran" / "Funded by F. Roughan" / app version. Tapping Credits may open a small credits sheet with the same lines and a few confetti nuts. Opens from gear and Pause.
+11 DAILY screen, 12 Daily RESULT, 13 STREAK SAVED/freeze used, 14 BIRTHDAY GREETING, 15 STATS, 16 THEMES, 17 HINT bubble.
+Navigation (v2 p17): Home -NEW GAME-> Difficulty -pick-> Level intro -START-> Playing -last bolt-> Complete -tap-> Stars -NEXT-> Level intro. CONTINUE -> Playing. Date chip -> Daily -beat-> Result (-> Streak saved if a freeze was used). Settings from gear & Pause. Stats/Themes from star total. HOME from any screen returns to start. Autosave game state after every move (resume exactly incl. undo history, hints left, extra bolts left, hidden state).
+
+=== DESIGN SYSTEM ===
+Colours: Black #09090B (background), Panel #161411, Gold #EABA3C (primary), Light gold #FFECA8, Ivory #F7F1E2 (text), Muted #AAA086. Subtle dark radial/gold glow background shapes as in PDF. Type: Poppins Bold headings/buttons, Poppins Medium rest (self-host, offline). Buttons: solid gold gradient (glossy, rounded pill, dark text, icon) for main action; gold outline for everything else. Panels: rounded cards, thin gold-tinted border. Icons: simple line/solid gold icons (inline SVG). App icon: hex nut stack icon in black & gold (generate PNG set 180/192/512 + apple-touch-icon + maskable). Name: "Nut Sort" (keep in one config constant, may change).
+Nuts: 3D-looking hexagonal nuts (top face lighter, side face, small centre hole highlight) with a symbol on the front; bolts = silver/white threaded rods on round white base. Lifted nut/run floats above its bolt; legal targets glow gold.
+18 NUT COLOURS + SYMBOLS: "unchanged from original game" — EXTRACT the exact 18 colours and symbols from the swatch row on Nut_Sort_App_Screens.pdf page 9 (bottom-left panel) and the boards throughout both PDFs; sample hex values from the rendered pages. Approximate reading order (row1): red/heart, light grey/star, purple, blue/drop, sky blue, indigo/violet, orange, brown, yellow; (row2): green/clover-plus, teal, pink/crown, charcoal/square, peach/flower, lime, magenta, mint/music note, salmon/triangle. Verify against PDF; each colour must have a distinct symbol for colour-blind play. Colours must remain distinguishable on all themes.
+
+=== MOTION & SOUND (v2 p15, targets to tune on phone) ===
+Single nut move ~0.42s: lift 120ms, glide 180ms, drop+settle 120ms (slight ease/bounce). Run of N: each extra nut starts 40ms later. Finished bolt gold pulse 250ms. Mystery reveal grey->colour 180ms. Level complete confetti ~1.5s. Input never blocked: player can tap next move while an animation finishes (queue/fast-forward logic state immediately, visuals catch up). Reduce motion -> quick fades. Sounds (Web Audio synth): click on lift, clunk on drop, chime on finished bolt, short fanfare on win, birthday jingle on each birthday. Unlock AudioContext on first touch (iOS). Light haptics not available in iOS Safari — skip. All timings in config.
+
+=== QUALITY / VERIFICATION ===
+- Unit tests (node --test): move legality, group move counts (room 3/run 2, room 1/run 2), mystery reveal + undo re-hide + revealed-not-joining, win detection, star thresholds incl. rounding and mystery, daily 3x + streak bonus cap + birthday 2x, streak freeze earn/hold-2/consume/reset, date rollover, save/restore/migration, every shipped level solvable (verify-all).
+- Playwright smoke test (iPhone viewport 390x844): load, play tutorial to win via scripted moves, offline reload works (service worker), Continue appears after leaving mid-level.
+- Performance check on largest board (108 nuts).
+- Lighthouse-style PWA checks: manifest, icons, standalone, theme-color #09090B, apple-mobile-web-app-capable, status bar black-translucent.
+- No external requests at runtime (grep build for http).
+
+=== MILESTONES (commit + update docs/PROGRESS.md after each) ===
+M1 scaffold ROOT structure, CLAUDE.md, docs, git, config. M2 rules engine + tests. M3 solver + generator + ladders + daily pool + verify-all (report stats). M4 board renderer + input + animations + group/mystery visuals. M5 screens + navigation + autosave/continue. M6 stars, result, hints (worker), extra bolt, undo, no-moves. M7 daily, streak, freeze, date chip. M8 stats, all 26 themes + fx, star spending, settings, backup/restore. M9 birthday themes (Kiaran + Flynn) + preview, credits section. M10 audio, reduce motion, polish to match PDFs, icons. M11 PWA offline + INSTALL_IPHONE.md + hosting setup. M12 full test pass, final summary of what to tune with Kiaran.
+
+=== DEFAULTS (decided; record in DECISIONS.md) ===
+Group moves always max that fits. Mystery undo restores hidden. Mystery stars 150/200%. Hints 3/level, 1 on mystery, free. Streak freeze 1 per 7 days, hold 2. Daily 3x + streak bonus up to +10. Birthday 2x daily stars (both Kiaran 15 Mar and Flynn 19 Oct). Free themes: Black & Gold + Cosmic Purple; 24 paid themes 40–1200 stars as listed. Spare bolts never <2. Extra free bolts per level: 2. Star thresholds 120/160%. Name "Nut Sort". All sample numbers tunable later.
+
+=== WORKING STYLE ===
+Kiaran is a student, prefers direct concise communication. When done, give: how to run on Mac (one command), how to install on iPhone, what's tunable, and known limitations. Keep code commented enough to extend. Do not add ads, analytics, accounts, or online features.

@@ -1,0 +1,16 @@
+{
+  "name": "nut-sort",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Nut Sort — personal offline nuts-and-bolts colour sorting game (PWA). Created by Kiaran.",
+  "scripts": {
+    "serve": "node tools/serve.js",
+    "test": "node --test \"tests/*.test.js\"",
+    "levels": "node tools/build-levels.js --all",
+    "daily": "node tools/build-daily.js",
+    "verify": "node tools/verify-all.js",
+    "sw": "node tools/stamp-sw.js",
+    "smoke": "node tests/smoke/smoke.mjs"
+  }
+}
