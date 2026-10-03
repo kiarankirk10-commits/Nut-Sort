@@ -25,7 +25,7 @@ export function defaultSave() {
     stars: { earned: 0, spent: 0 },
     stats: { levelsSolved: 0, perfect: 0, nutsSorted: 0, wins: 0, solvedBy: { easy: 0, medium: 0, hard: 0 } },
     themes: { owned: FREE_THEMES.slice(), equipped: 'black-gold' },
-    seen: { birthdayGreeting: null, freezeNotice: null, hintBubble: false },
+    seen: { birthdayGreeting: null, freezeNotice: null, freezeShown: null, mysteryTip: false },
   };
 }
 

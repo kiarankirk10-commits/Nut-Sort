@@ -1,0 +1,86 @@
+/* Theme fx layers (fx.js) + per-theme UI flourishes. Animations are transform/opacity only. */
+.fx { position: absolute; inset: 0; overflow: hidden; }
+.fx i { position: absolute; display: block; will-change: transform; }
+
+/* sheen: soft diagonal light sweep across the background */
+.fx-sheen i:first-child { left: -60%; top: -20%; width: 50%; height: 140%; background: linear-gradient(100deg, transparent, var(--c), transparent); transform: translateX(0) rotate(8deg); animation: fxSheen 11s ease-in-out infinite; }
+.fx-sheen i + i { display: none; }
+@keyframes fxSheen { 0%, 55% { transform: translateX(0) rotate(8deg); } 100% { transform: translateX(400%) rotate(8deg); } }
+
+/* nebula: drifting clouds */
+.fx-nebula i { width: 90vmax; height: 70vmax; border-radius: 50%; opacity: .9; }
+.fx-nebula i:nth-child(1) { left: -30vmax; top: -10vmax; background: radial-gradient(closest-side, var(--c0), transparent); animation: fxDrift1 46s ease-in-out infinite alternate; }
+.fx-nebula i:nth-child(2) { right: -35vmax; top: 20vmax; background: radial-gradient(closest-side, var(--c1), transparent); animation: fxDrift2 58s ease-in-out infinite alternate; }
+.fx-nebula i:nth-child(3) { left: -10vmax; bottom: -40vmax; background: radial-gradient(closest-side, var(--c2, transparent), transparent); animation: fxDrift1 64s ease-in-out infinite alternate-reverse; }
+@keyframes fxDrift1 { to { transform: translate(14vmax, 8vmax) scale(1.15); } }
+@keyframes fxDrift2 { to { transform: translate(-12vmax, -10vmax) scale(.9); } }
+
+/* aurora: three waving bands near the top */
+.fx-aurora i { left: -30%; width: 160%; height: 34vh; border-radius: 50%; opacity: .55; mix-blend-mode: screen; }
+.fx-aurora i:nth-child(1) { top: -6vh; background: radial-gradient(50% 50% at 50% 50%, var(--c0), transparent 70%); animation: fxWave 16s ease-in-out infinite alternate; }
+.fx-aurora i:nth-child(2) { top: 6vh; background: radial-gradient(50% 50% at 50% 50%, var(--c1), transparent 70%); animation: fxWave 21s ease-in-out infinite alternate-reverse; opacity: .45; }
+.fx-aurora i:nth-child(3) { top: 14vh; background: radial-gradient(50% 50% at 50% 50%, var(--c2), transparent 70%); animation: fxWave 27s ease-in-out infinite alternate; opacity: .35; }
+@keyframes fxWave { 0% { transform: translateX(-8%) skewY(-6deg) scaleY(.7); } 100% { transform: translateX(8%) skewY(6deg) scaleY(1.15); } }
+
+/* synthwave: sun + scrolling neon grid */
+.fx-grid i:nth-child(1) { left: 50%; bottom: 23vh; width: 46vmin; height: 23vmin; margin-left: -23vmin; border-radius: 23vmin 23vmin 0 0; background: linear-gradient(180deg, #FFE36E, #FF3EC8 75%); -webkit-mask-image: repeating-linear-gradient(180deg, #000 0 9px, transparent 9px 12px); mask-image: repeating-linear-gradient(180deg, #000 0 9px, transparent 9px 12px); opacity: .32; }
+.fx-grid i:nth-child(2) { left: -50%; right: -50%; bottom: -10vh; height: 34vh; transform: perspective(240px) rotateX(62deg); transform-origin: 50% 0; overflow: hidden; opacity: .35; }
+.fx-grid i:nth-child(2)::before { content: ''; position: absolute; left: 0; right: 0; top: -40px; height: calc(100% + 80px); background: repeating-linear-gradient(90deg, rgba(40,224,255,.9) 0 2px, transparent 2px 40px), repeating-linear-gradient(180deg, rgba(255,62,200,.9) 0 2px, transparent 2px 40px); animation: fxGrid 2.4s linear infinite; }
+@keyframes fxGrid { to { transform: translateY(40px); } }
+.fx-grid i:nth-child(3) { display: none; }
+
+/* lava: molten cracks pulsing */
+.fx-lava i:nth-child(1) { inset: 0; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 240 240'><g fill='none' stroke='%23FF5A00' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M0 60 L40 72 L62 50 L104 66 L130 40 L170 58 L206 44 L240 60'/><path d='M62 50 L70 20 L96 0'/><path d='M130 40 L150 92 L132 132 L160 170 L150 210 L176 240'/><path d='M0 170 L36 160 L60 184 L104 172 L132 132'/><path d='M206 44 L214 104 L240 120'/><path d='M60 184 L52 240'/></g></svg>"); background-size: 240px 240px; opacity: .22; animation: fxPulse 4.5s ease-in-out infinite; }
+.fx-lava i:nth-child(2) { inset: 0; background: radial-gradient(60% 30% at 50% 100%, rgba(255,176,0,.25), transparent 70%); animation: fxPulse 6s ease-in-out infinite reverse; }
+.fx-lava i:nth-child(3) { display: none; }
+@keyframes fxPulse { 50% { opacity: .5; } }
+
+/* sunset sun glow */
+.fx-sunglow i:nth-child(1) { left: 50%; top: -18vmin; width: 60vmin; height: 60vmin; margin-left: -30vmin; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,214,140,.55), rgba(255,122,61,.18) 60%, transparent); animation: fxBreathe 7s ease-in-out infinite; }
+.fx-sunglow i + i { display: none; }
+@keyframes fxBreathe { 50% { transform: scale(1.08); opacity: .8; } }
+
+/* molten gold: slow liquid blobs */
+.fx-goldflow i { width: 80vmax; height: 50vmax; border-radius: 50%; }
+.fx-goldflow i:nth-child(1) { left: -30vmax; top: -15vmax; background: radial-gradient(closest-side, rgba(255,224,138,.16), transparent); animation: fxDrift1 30s ease-in-out infinite alternate; }
+.fx-goldflow i:nth-child(2) { right: -30vmax; bottom: -10vmax; background: radial-gradient(closest-side, rgba(234,186,60,.16), transparent); animation: fxDrift2 38s ease-in-out infinite alternate; }
+.fx-goldflow i:nth-child(3) { left: -40%; top: 0; width: 40%; height: 100%; border-radius: 0; background: linear-gradient(100deg, transparent, rgba(255,240,190,.07), transparent); animation: fxSheenX 9s ease-in-out infinite; }
+@keyframes fxSheenX { 0%, 40% { transform: translateX(0); } 100% { transform: translateX(380%); } }
+
+/* black hole: accretion ring behind the top of the board */
+.fx-blackhole i:nth-child(1) { left: 50%; top: 13vh; width: 120vmin; height: 120vmin; margin: -60vmin 0 0 -60vmin; transform: scaleY(.32) rotate(0deg); }
+.fx-blackhole i:nth-child(1)::before { content: ''; position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, #FF8A2A, #FFF1DC, #9A5CFF, #FF8A2A, #FFD2A0, #6A3CC8, #FF8A2A); -webkit-mask-image: radial-gradient(closest-side, transparent 52%, #000 56%, #000 64%, transparent 76%); mask-image: radial-gradient(closest-side, transparent 52%, #000 56%, #000 64%, transparent 76%); opacity: .55; animation: fxSpin 26s linear infinite; }
+.fx-blackhole i:nth-child(2) { left: 50%; top: 13vh; width: 64vmin; height: 64vmin; margin: -32vmin 0 0 -32vmin; border-radius: 50%; background: radial-gradient(closest-side, #000 60%, rgba(255,160,90,.25) 70%, transparent 76%); }
+.fx-blackhole i:nth-child(3) { display: none; }
+@keyframes fxSpin { to { transform: rotate(360deg); } }
+
+/* prism: full-spectrum rotating glow */
+.fx-prism i:nth-child(1) { left: 50%; top: 40%; width: 150vmax; height: 150vmax; margin: -75vmax 0 0 -75vmax; border-radius: 50%; background: conic-gradient(#ff5e7e, #ffb35e, #f9ff5e, #5eff9b, #5ed7ff, #8d5eff, #ff5ed9, #ff5e7e); -webkit-mask-image: radial-gradient(closest-side, rgba(0,0,0,.20), transparent 70%); mask-image: radial-gradient(closest-side, rgba(0,0,0,.20), transparent 70%); animation: fxSpin 40s linear infinite; }
+.fx-prism i + i { display: none; }
+
+/* deep ocean light rays */
+.fx-rays i { top: -10%; width: 18%; height: 80%; background: linear-gradient(180deg, rgba(120,220,255,.12), transparent); transform-origin: 50% 0; }
+.fx-rays i:nth-child(1) { left: 18%; animation: fxSway 12s ease-in-out infinite alternate; }
+.fx-rays i:nth-child(2) { left: 46%; width: 12%; animation: fxSway 15s ease-in-out infinite alternate-reverse; }
+.fx-rays i:nth-child(3) { left: 70%; animation: fxSway 18s ease-in-out infinite alternate; }
+@keyframes fxSway { from { transform: rotate(-8deg); } to { transform: rotate(8deg); } }
+
+/* ---------- per-theme UI flourishes ---------- */
+.btn-gold::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: var(--btn-sheen, none); pointer-events: none; }
+.th-molten .btn-gold::after { background-size: 250% 100%; animation: btnSheen 4s ease-in-out infinite; }
+@keyframes btnSheen { 0%, 50% { background-position: 150% 0; } 100% { background-position: -100% 0; } }
+
+/* holographic: foil buttons + borders */
+.th-holo .btn-gold, .th-holo .pill-btn.solid, .th-holo .price.eq, .th-holo .toggle.on, .th-holo .hint-bubble {
+  background: linear-gradient(110deg, #FF9AE0, #9AE6FF, #B8FF9A, #FFE39A, #FF9AE0, #9AE6FF); background-size: 300% 100%; animation: holo 9s linear infinite;
+}
+.th-holo .panel { border-color: transparent; background: linear-gradient(var(--panel), var(--panel)) padding-box, linear-gradient(110deg, #FF9AE0, #9AE6FF, #B8FF9A, #FFE39A, #FF9AE0) border-box; }
+@keyframes holo { to { background-position: 300% 0; } }
+
+/* nebula: iridescent main buttons */
+.th-iridescent .btn-gold, .th-iridescent .pill-btn.solid, .th-iridescent .price.eq { background: linear-gradient(110deg, #FF6FB5, #B07BFF, #6E9BFF, #5CF2E0, #FF6FB5); background-size: 260% 100%; animation: holo 12s linear infinite; }
+
+/* prism: rainbow-edged panels */
+.th-prism-ui .panel { border-color: transparent; background: linear-gradient(var(--panel), var(--panel)) padding-box, conic-gradient(from 0deg, #ff5e7e, #ffb35e, #f9ff5e, #5eff9b, #5ed7ff, #8d5eff, #ff5ed9, #ff5e7e) border-box; }
+
+.reduce-motion .fx, .reduce-motion #fx-canvas { display: none; }

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Nut Sort</title>
+<meta name="description" content="Nut Sort — an offline nuts-and-bolts colour sorting game. Created by Kiaran.">
+<meta name="theme-color" content="#09090B">
+<meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Nut Sort">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preload" href="fonts/poppins-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/poppins-500.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/themes.css">
+</head>
+<body>
+<div id="bg"></div>
+<div id="bg-old"></div>
+<div id="fx-layer"></div>
+<canvas id="fx-canvas"></canvas>
+<main id="app"></main>
+<div id="party"></div>
+<canvas id="confetti"></canvas>
+<div id="toast" role="status" aria-live="polite"></div>
+<noscript><p style="padding:40px;color:#F7F1E2;font-family:sans-serif">Nut Sort needs JavaScript.</p></noscript>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
