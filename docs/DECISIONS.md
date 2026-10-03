@@ -41,3 +41,12 @@ Every default from the build prompt / PDFs, plus every deviation and why. Newest
 18. **Level 1 is the tutorial board** the first time only; Easy level 1 follows it.
 19. **Daily replay** after beating it is allowed for fun but pays no extra stars and doesn't change the streak.
 20. **Service worker update flow**: a new version precaches in the background and activates on the next launch (no `skipWaiting` mid-game). Progress lives in localStorage and is never touched by updates.
+21. **Two theme colours nudged for contrast** (the contrast test is mandatory): Cosmic Purple's main-button text is dark `#140A38` instead of white (white on `#9B6BFF` is only 3.5:1); Sapphire's gradient partner is `#2E52E0` instead of `#1E3FCC` so button text stays readable across the gradient.
+22. **Contrast test thresholds**: text on panel ≥ 4.5:1, muted text ≥ 3:1, accent (outline buttons) ≥ 3:1, button text ≥ 4.5:1 on `--accent` and ≥ 3:1 on `--accent-2`, every nut's lit face ≥ 2:1 against the board background (nuts also have dark side faces, white bases and symbols).
+23. **Tutorial stars** go into the star balance once (first completion only) but don't count toward any difficulty's progress.
+24. **A level counts as "in progress" as soon as it's opened**, so Home shows CONTINUE even before the first move.
+25. **Board rendering = DOM `<img>` per nut** (SVG art rasterised once per colour, moved with `transform` via WAAPI). Measured 60fps with 108 nuts in Chrome; no canvas needed.
+26. **Hidden-nut art**: grey `#4C5059` nut with a "?" (matches PDF). The real colour image sits underneath and cross-fades in on reveal (180ms).
+27. **Daily replay after midnight**: an unfinished daily from yesterday can't be continued (its slot is discarded) — the daily is "the same all day, resets at midnight".
+28. **Service worker in the repo stays in "dev" mode** (network-first, so edits show while developing). `tools/stamp-sw.js` (run automatically by the GitHub Pages workflow and `npm run smoke`) switches it to cache-first with a content-hashed cache name for deploys.
+29. **Birthday decorations push screen content down 16px** so the bunting never covers the top bar.

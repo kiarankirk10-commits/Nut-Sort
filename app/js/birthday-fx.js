@@ -23,6 +23,7 @@ function balloon(color, style) {
 /** Show or hide the decorations. `screen` lets us keep balloons off the busy play area edges. */
 export function setBirthdayDecor(on) {
   const root = document.getElementById('party');
+  document.body.classList.toggle('bday-on', !!on);
   if (!on) { root.innerHTML = ''; root.dataset.on = ''; return; }
   if (root.dataset.on) return;
   root.dataset.on = '1';

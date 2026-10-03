@@ -2,7 +2,7 @@
 // PRECACHE + VERSION are rewritten by `node tools/stamp-sw.js` (run before every deploy).
 // Update flow: a new version installs in the background and waits; it activates the next time
 // the app is launched (all old pages closed). Progress lives in localStorage and is untouched.
-const VERSION = '1.0.0-7fd68dd548';
+const VERSION = 'dev';
 const PRECACHE = [
   './',
   'css/app.css',
@@ -30,6 +30,7 @@ const PRECACHE = [
   'js/engine.js',
   'js/fx.js',
   'js/game.js',
+  'js/hint-core.js',
   'js/hint-worker.js',
   'js/hints.js',
   'js/icons.js',

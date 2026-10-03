@@ -11,7 +11,7 @@ function heroHTML(app) {
   const W = 23; // nut width as % of hero width
   const nut = (c, x, k, extra = '', cls = '') => `<img class="${cls}" src="${nutImage(c, app.save.settings.symbols)}" style="left:${x - W / 2}%;width:${W}%;top:${62 - k * 15.6}%;${extra}">`;
   const base = (x) => `<img src="${baseImage()}" style="left:${x - 14.5}%;width:29%;top:84%">`;
-  const hat = app.birthday() ? `<div style="position:absolute;left:${78 - 4.5}%;width:9%;top:-16%;height:16%" class="bob">${partyHat()}</div>` : '';
+  const hat = app.birthday() ? `<div style="position:absolute;left:${78 - 4.5}%;width:9%;top:7%;height:15%">${partyHat()}</div>` : '';
   return `<div class="hero" aria-hidden="true">
     ${base(22)}${base(50)}${base(78)}
     ${nut(7, 22, 0)}${nut(4, 22, 1)}${nut(10, 22, 2)}

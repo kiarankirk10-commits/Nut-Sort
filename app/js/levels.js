@@ -1,7 +1,7 @@
 // Level data access. Boards are pre-generated on the Mac (tools/build-levels.js) and shipped
 // as JSON; the phone never solves to create levels.
 import { decodeBoard, decodeMoves, encodeBoard, createState } from './engine.js';
-import { LEVEL_FILES, mysteryModeFor } from './config.js';
+import { LEVEL_FILES, mysteryModeFor, FEATURES } from './config.js';
 import { dailyIndex } from './dates.js';
 import { mulberry32, shuffleInPlace } from './rng.js';
 
@@ -25,6 +25,7 @@ export function shippedCount(name) { return cache[name] ? cache[name].count : 0;
 /** Turn a raw record into a playable level description. */
 export function toLevel(rec, meta) {
   const state = decodeBoard(rec.b, rec.h);
+  if (!FEATURES.mystery) { state.hidden = state.hidden.map((h) => h.map(() => false)); rec = { ...rec, m: 0 }; }
   return {
     ...meta,
     cap: rec.h,

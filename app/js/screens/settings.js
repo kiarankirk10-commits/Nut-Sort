@@ -2,7 +2,7 @@
 // reset (in-app confirm), credits at the bottom.
 import { icon } from '../icons.js';
 import { wire, h, toast, confirmModal, overlay } from '../ui.js';
-import { APP_NAME, APP_VERSION, CREATOR, FUNDED_BY, BIRTHDAYS } from '../config.js';
+import { APP_NAME, APP_VERSION, CREATOR, FUNDED_BY, BIRTHDAYS, FEATURES } from '../config.js';
 import { exportBackup, readBackupFile, replaceSave, resetSave } from '../storage.js';
 import { nutImage } from '../art.js';
 import { confetti } from '../confetti.js';
@@ -19,12 +19,12 @@ export default {
       <div class="scroll">
       <div class="panel set-list">
         ${row('sound', 'sound', 'Sound effects', 'Clicks, chimes and win jingle', s.sound)}
-        ${row('music', 'music', 'Music', 'Soft background loop', s.music)}
+        ${FEATURES.music ? row('music', 'music', 'Music', 'Soft background loop', s.music) : ''}
         ${row('symbols', 'heart', 'Show symbols on nuts', 'Helps tell similar colours apart', s.symbols)}
         ${row('reduceMotion', 'motion', 'Reduce motion', 'Shorter, calmer animations (quick fades)', s.reduceMotion)}
-        ${row('birthday', 'cake', 'Preview birthday theme', 'See the birthday look today', !!prev)}
+        ${FEATURES.birthday ? row('birthday', 'cake', 'Preview birthday theme', 'See the birthday look today', !!prev) : ''}
         ${prev ? `<div class="seg">${BIRTHDAYS.map((b) => `<button class="${prev === b.name ? 'on' : ''}" data-act="bday" data-arg="${b.name}">${b.name}</button>`).join('')}</div>` : ''}
-        <button class="set-row" data-act="themes">${icon('palette')}<div class="txt"><b>Themes</b><span>Spend stars on new looks</span></div>${icon('back').replace('<svg', '<svg style="transform:rotate(180deg);width:16px;color:var(--muted)"')}</button>
+        ${FEATURES.themes ? '' : '<!--'}<button class="set-row" data-act="themes">${icon('palette')}<div class="txt"><b>Themes</b><span>Spend stars on new looks</span></div>${icon('back').replace('<svg', '<svg style="transform:rotate(180deg);width:16px;color:var(--muted)"')}</button>${FEATURES.themes ? '' : '-->'}
       </div>
       <div class="panel set-list set-block">
         <div class="set-row">${icon('download')}<div class="txt"><b>Back up my progress</b><span>Export or import a save file</span></div>

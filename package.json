@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Nut Sort — personal offline nuts-and-bolts colour sorting game (PWA). Created by Kiaran.",
+  "description": "Nut Sort \u2014 personal offline nuts-and-bolts colour sorting game (PWA). Created by Kiaran.",
   "scripts": {
     "serve": "node tools/serve.js",
     "test": "node --test \"tests/*.test.js\"",
@@ -11,7 +11,8 @@
     "daily": "node tools/build-daily.js",
     "verify": "node tools/verify-all.js",
     "sw": "node tools/stamp-sw.js",
-    "smoke": "node tools/stamp-sw.js && node tests/smoke/smoke.mjs"
+    "smoke": "node tools/stamp-sw.js && node tests/smoke/smoke.mjs; s=$?; node tools/stamp-sw.js --dev; exit $s",
+    "icons": "node tools/make-icons.js"
   },
   "devDependencies": {
     "playwright-core": "^1.63.0"

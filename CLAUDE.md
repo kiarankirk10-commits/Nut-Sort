@@ -15,13 +15,14 @@ Playwright (dev only) lives in `node_modules.nosync` (symlinked as `node_modules
 - `node tools/build-levels.js --difficulty hard --count 500` / `--all` — regenerate ladders
 - `node tools/build-daily.js --count 365` — regenerate the daily pool
 - `node tools/calibrate.js` — re-measure mean par per board shape (feeds the ladder builder)
-- `node tools/stamp-sw.js` — refresh the service-worker precache list + bump cache version (run before every deploy)
+- `node tools/stamp-sw.js` — stamp the service worker for deploy (cache-first, hashed cache name); `--dev` puts it back to network-first for local dev. The GitHub Pages workflow stamps automatically.
+- `npm run icons` — regenerate PNG icons from the nut art (needs Google Chrome)
 - `npm run smoke` — Playwright smoke test (iPhone 390×844)
 
 ## Folder map
 - `app/` shippable PWA. `app/js/`:
   - pure, shared with Node: `engine.js` (rules), `solver.js`, `config.js` (ALL tunables + feature flags), `stars.js`, `streak.js`, `dates.js`, `birthday.js`, `save.js` (save model + migrations), `levels.js`, `rng.js`, `colors.js`, `themes.js` (data)
-  - browser: `main.js` (boot + router), `game.js` (session controller: undo, hints, autosave), `renderer.js` (board DOM + animations), `layout.js`, `storage.js` (localStorage + backup), `audio.js`, `fx.js` (theme effects), `theme-apply.js`, `ui.js` (helpers), `icons.js`, `confetti.js`, `birthday-fx.js`, `hint-worker.js`, `screens/*.js`
+  - browser: `main.js` (boot + router), `game.js` (session controller: undo, hints, autosave), `renderer.js` (board DOM + animations), `layout.js`, `storage.js` (localStorage + backup), `audio.js`, `fx.js` (theme effects), `theme-apply.js`, `ui.js` (helpers), `icons.js`, `confetti.js`, `birthday-fx.js`, `hint-worker.js` (+ pure `hint-core.js`), `make-icons.js` in tools, `screens/*.js`
   - `data/` generated level JSON (committed)
 - `tools/` Node build scripts (generator, ladders, builders, verify, serve, pool workers)
 - `tests/` unit tests + `tests/smoke/` Playwright
