@@ -47,7 +47,7 @@ function openPreview(app, id, rerender) {
   else if (owned) action = '<button class="btn btn-gold" data-act="equip">Equip</button>';
   else if (bal >= t.price) action = `<button class="btn btn-gold" data-act="buy">Buy for ${t.price} stars</button>`;
   else action = `<p class="need">You have ${bal} ★ — ${t.price - bal} more needed. Earn stars on levels and the daily.</p><button class="btn btn-gold" disabled>Buy for ${t.price} stars</button>`;
-  sheet = h(`<div class="theme-sheet panel"><h2>${esc(t.name)}</h2><div class="tier">${tier}${t.price ? ` · ${t.price} stars` : ' · free'}${t.fx.length ? ' · animated' : ''}</div>
+  sheet = h(`<div class="theme-sheet panel"><h2>${esc(t.name)}</h2><div class="tier">${tier}${t.price ? ` · ${t.price} stars` : ' · included'}${t.fx.length ? ' · animated' : ''}</div>
     <div class="btns">${action}<button class="btn btn-outline" data-act="close">${eq ? 'Back' : 'Close preview'}</button></div></div>`);
   banner = h(`<span class="chip preview-banner">${icon('palette').replace('<svg', '<svg style="color:var(--accent)"')}Previewing ${esc(t.name)}</span>`);
   document.body.appendChild(banner);

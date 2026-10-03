@@ -5,3 +5,4 @@ test-results
 playwright-report
 *.log
 _ref_tmp/
+tests/smoke/out/

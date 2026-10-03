@@ -25,8 +25,14 @@ export function savedGame(app, slot) {
 
 /** "Medium · Level 14 · 9 moves in" for the CONTINUE button (or null). */
 export function continueInfo(app) {
-  const slot = app.save.lastSlot;
-  const g = slot && savedGame(app, slot);
+  let slot = app.save.lastSlot;
+  let g = slot && savedGame(app, slot);
+  if (!g) { // fall back to the most recently saved unfinished game
+    const slots = Object.keys(app.save.inProgress).filter((k) => savedGame(app, k));
+    slots.sort((a, b) => (app.save.inProgress[b].savedAt || 0) - (app.save.inProgress[a].savedAt || 0));
+    slot = slots[0];
+    g = slot && savedGame(app, slot);
+  }
   if (!g) return null;
   const r = g.ref;
   const what = r.kind === 'level' ? `${DIFF_LABEL[r.difficulty]} · Level ${r.number}` : r.kind === 'daily' ? 'Daily challenge' : 'Tutorial';

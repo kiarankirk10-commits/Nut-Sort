@@ -11,6 +11,9 @@
     "daily": "node tools/build-daily.js",
     "verify": "node tools/verify-all.js",
     "sw": "node tools/stamp-sw.js",
-    "smoke": "node tests/smoke/smoke.mjs"
+    "smoke": "node tools/stamp-sw.js && node tests/smoke/smoke.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.63.0"
   }
 }
